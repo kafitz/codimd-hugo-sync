@@ -13,6 +13,10 @@ Golang program for watching for CodeMD events in its Postgres database and addin
             "dbname": "hackmd",
             "user": "hackmd",
             "password": "hackmdpass"
+        },
+        "hugo": {
+            "baseDir": "/path/to/hugo/blog/",
+            "postsDir": "/path/to/hugo/blog/posts/"
         }
     }
     ```
