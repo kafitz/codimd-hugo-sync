@@ -1,6 +1,7 @@
 package hugoio
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -24,22 +25,26 @@ func getYAMLEnd(header string, content string) (YAMLEnd int) {
 	return YAMLEnd
 }
 
-func findYAMLData(content string) (YAMLData models.PostMetadata) {
+func findYAMLData(content string) (YAMLData models.PostMetadata, err error) {
 	YAMLHeader := "---"
 	YAMLEnd := getYAMLEnd(YAMLHeader, content)
 	RawYAMLContent := strings.TrimSpace(content[:YAMLEnd])
-	YAMLContent := strings.TrimSpace(RawYAMLContent[len(YAMLHeader) : len(RawYAMLContent)-len(YAMLHeader)])
-	err := yaml.Unmarshal([]byte(YAMLContent), &YAMLData)
-	if err != nil {
-		log.Fatalln(err)
+	if len(RawYAMLContent) < len(YAMLHeader)*2 {
+		err = errors.New("no YAML header found")
+		return YAMLData, err
 	}
-	return YAMLData
+	YAMLContent := strings.TrimSpace(RawYAMLContent[len(YAMLHeader) : len(RawYAMLContent)-len(YAMLHeader)])
+	err = yaml.Unmarshal([]byte(YAMLContent), &YAMLData)
+	return YAMLData, err
 }
 
 // UpdateMetadataFromMarkdown updates an existing metadata object with values from
 // a post's front matter: https://gohugo.io/content-management/front-matter/
 func UpdateMetadataFromMarkdown(postContent *string, metadata *models.PostMetadata) {
-	YAMLData := findYAMLData(*postContent)
+	YAMLData, err := findYAMLData(*postContent)
+	if err != nil {
+		return
+	}
 	metadata.Description = YAMLData.Description
 	metadata.IsBlogPost = YAMLData.IsBlogPost
 	metadata.TagsRaw = YAMLData.TagsRaw
